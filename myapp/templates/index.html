@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Swap Detection</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom styles -->
+  <style>
+    body,
+    html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-image: url('https://img.freepik.com/free-photo/abstract-low-poly-background-with-connecting-dots_1048-8571.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+    }
+
+    /* Navbar styling */
+    .navbar-brand {
+      font-size: 1.75rem;
+      font-weight: bold;
+      letter-spacing: 0.05rem;
+    }
+
+    .navbar-custom {
+      background-color: rgba(52, 58, 64, 0.8);
+      /* Transparent background */
+    }
+
+    .navbar-custom .navbar-nav .nav-link {
+      color: white;
+      margin-right: 20px;
+      transition: color 0.3s ease;
+    }
+
+    .navbar-custom .navbar-nav .nav-link:hover {
+      color: #007bff;
+    }
+
+    /* Main content */
+    .content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Card styling */
+    .card {
+      border-radius: 15px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      background-color: rgba(255, 255, 255, 0.9);
+      color: black;
+      margin-top: 120px;
+    }
+
+    #imagePreview {
+      max-width: 100%;
+      max-height: 350px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .result-alert {
+      display: none;
+    }
+
+    .btn-custom {
+      background-color: #00ff77;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 12px 25px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-custom:hover {
+      background-color: #0056b3;
+    }
+
+    /* Footer styling */
+    footer {
+      background-color: rgba(52, 58, 64, 0.9);
+      color: white;
+      padding: 15px 0;
+      text-align: center;
+    }
+
+    /* About Section */
+    #about {
+      background-color: rgba(53, 22, 147, 0.9);
+      color: white;
+      padding: 50px 20px;
+      text-align: center;
+    }
+
+    #about h2 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    #about p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* Blog Section */
+    #blog {
+      background-color: rgba(53, 22, 147, 0.9);
+      color: white;
+      padding: 50px 20px;
+      text-align: center;
+    }
+
+    #blog h2 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .blog-item {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .blog-item h3 {
+      font-size: 1.5rem;
+      margin-top: 10px;
+    }
+
+    .blog-item p {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    #loader {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+    }
+
+
+    #blog .blog-item img {
+      width: 100%;
+      /* Ensures image takes up the width of the column */
+      height: 200px;
+      /* Set a fixed height */
+      object-fit: cover;
+      /* Ensures the image maintains aspect ratio and covers the entire area */
+    }
+  </style>
+</head>
+
+<body {% csrf_token %}>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">Face Swap Detection</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#about">About Us</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#blog">Blogs</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="content">
+    <div class="card text-center col-md-6 col-lg-4">
+      <h2 class="mb-4">Upload an Image for Face Swap Detection</h2>
+
+      <!-- Image Upload -->
+      <div class="mb-3">
+        <label for="imageUpload" class="form-label">Choose an Image</label>
+        <input class="form-control" type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)">
+      </div>
+
+      <!-- Image Preview -->
+      <div class="mb-3">
+        <img id="imagePreview" src="" alt="Image Preview" class="img-fluid" style="display: none;">
+      </div>
+
+      <!-- Add a loader animation -->
+      <div id="loader" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Analyzing...</span>
+        </div>
+      </div>
+
+      <!-- Analyze Button -->
+      <button class="btn btn-custom" id="analyzeButton" onclick="analyzeImage()">Analyze Image</button>
+
+      <!-- Result Section -->
+      <div id="resultAlert" class="alert result-alert mt-4"></div>
+    </div>
+  </div>
+
+  <!-- About Us Section -->
+  <section id="about">
+    <div class="container">
+      <h2>About Us</h2>
+      <p>
+        We are a passionate team dedicated to bringing cutting-edge technology to the forefront of image processing. Our
+        goal is to create powerful tools that enable users to detect image manipulations like face swapping, making the
+        digital world a more secure place.
+      </p>
+    </div>
+  </section>
+
+  <!-- Blog Section -->
+  <section id="blog">
+    <div class="container">
+      <h2>Latest Articles</h2>
+      <div class="row">
+        <div class="col-md-4 blog-item">
+          <img src="https://www.hkcert.org/f/blog/912175/930p523/5413%20%281%29_1710142728.jpg" alt="Blog image"
+            class="img-fluid mb-3">
+          <h3>Understanding Face Swap Technology</h3>
+          <p>An in-depth look at the rise of face-swap apps and the dangers they pose to image authenticity.</p>
+          <a href="https://www.hkcert.org/blog/deepfake-where-images-don-t-always-speak-truth"
+            class="btn btn-primary">Read More</a>
+        </div>
+        <div class="col-md-4 blog-item">
+          <img
+            src="https://blogapp.bitdefender.com/hotforsecurity/content/images/2023/12/Deepfakes-what-they-are--how-they-work-and-how-to-protect-against-malicious-usage-in-the-digital-age.jpg"
+            alt="Blog image" class="img-fluid mb-3">
+          <h3>The Role of AI in Detecting Deepfakes</h3>
+          <p>How AI is revolutionizing media forensics and protecting users from fake content.</p>
+          <a href="https://www.valuecoders.com/blog/ai-ml/what-is-deepfake-ai-and-its-potential/"
+            class="btn btn-primary">Read More</a>
+        </div>
+        <div class="col-md-4 blog-item">
+          <img src="https://addepto.com/wp-content/uploads/2021/05/Completing-authorization-with-innovative-glasses.png"
+            alt="Blog image" class="img-fluid mb-3">
+          <h3>Future of Image Verification</h3>
+          <p>What’s next for AI-driven image verification technologies and how they will evolve in the coming years.</p>
+          <a href="https://addepto.com/blog/using-artificial-intelligence-ai-for-image-recognition/"
+            class="btn btn-primary">Read More</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2024 Face Swap Detection. All rights reserved.</p>
+    <p>
+      <a>Contact Us: 9833799878</a>
+    </p>
+    <p>
+      Follow us on:
+      <a href="#">Instagram<i class="fab fa-facebook"></i></a>
+      <a href="#">Linkdin<i class="fab fa-twitter"></i></a>
+      <a href="#">Github<i class="fab fa-instagram"></i></a>
+    </p>
+  </footer>
+
+  <!-- Bootstrap JS and Optional Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <script>
+    function previewImage(event) {
+      const input = event.target;
+      const file = input.files[0];
+      const preview = document.getElementById('imagePreview');
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          document.getElementById('analyzeButton').disabled = false;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function analyzeImage() {
+        const resultAlert = document.getElementById('resultAlert');
+        const loader = document.getElementById('loader');
+        const imageInput = document.getElementById('imageUpload').files[0];
+
+        if (!imageInput) {
+          alert("Please upload an image first.");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('image', imageInput);
+
+        // Show the loader while processing the image
+        loader.style.display = 'block';
+        resultAlert.style.display = 'none';
+
+        // Send the image to the backend via AJAX
+        fetch('/analyze/', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            // Hide the loader
+            loader.style.display = 'none';
+
+            // Display appropriate message based on the result
+            if (data.result !== undefined) {
+              if (data.result === 0) {
+                resultAlert.textContent = 'The image is fake.';
+                resultAlert.classList.remove('alert-success');
+                resultAlert.classList.add('alert-danger');
+              } else if (data.result === 1) {
+                resultAlert.textContent = 'The image is real.';
+                resultAlert.classList.remove('alert-danger');
+                resultAlert.classList.add('alert-success');
+              }
+              resultAlert.style.display = 'block';
+            } else {
+              // Handle unexpected response format
+              resultAlert.textContent = 'Unexpected result format.';
+              resultAlert.classList.add('alert-danger');
+              resultAlert.style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            loader.style.display = 'none';
+            resultAlert.textContent = 'An error occurred. Please try again.';
+            resultAlert.classList.add('alert-danger');
+            resultAlert.style.display = 'block';
+          });
+      }
+  </script>
+
+</body>
+
+</html>
